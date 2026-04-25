@@ -1,15 +1,16 @@
 # -*- mode: python ; coding: utf-8 -*-
 """
 PyInstaller spec — GST Invoice Extractor
-Produces:
-  • macOS  →  dist/GST Invoice Extractor.app   (run: bash build_mac.sh)
-  • Windows → dist/GST_Invoice_Extractor/       (run: build_exe.bat)
 """
 
 import sys
 import os
 from pathlib import Path
-from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+from PyInstaller.utils.hooks import (
+    collect_data_files,
+    collect_submodules,
+    copy_metadata,   # ✅ ADDED
+)
 
 # ── Locate package paths ──────────────────────────────────────────────────────
 import streamlit as _st
@@ -20,27 +21,31 @@ ALTAIR_PATH = Path(_alt.__file__).parent
 
 # ── Data files to bundle ──────────────────────────────────────────────────────
 datas = [
-    # App source files
-    ("app.py",          "."),
-    ("extractor.py",    "."),
+    ("app.py", "."),
+    ("extractor.py", "."),
     ("excel_writer.py", "."),
 
-    # Streamlit frontend (HTML/CSS/JS/fonts)
     (str(STREAMLIT_PATH / "static"),     "streamlit/static"),
     (str(STREAMLIT_PATH / "runtime"),    "streamlit/runtime"),
     (str(STREAMLIT_PATH / "components"), "streamlit/components"),
     (str(STREAMLIT_PATH / "web"),        "streamlit/web"),
 
-    # Altair Vega schemas
     (str(ALTAIR_PATH / "vegalite"),  "altair/vegalite"),
     (str(ALTAIR_PATH / "utils"),     "altair/utils"),
 ]
 
+# Existing data collection
 datas += collect_data_files("streamlit")
 datas += collect_data_files("altair")
 datas += collect_data_files("pdfminer")
 datas += collect_data_files("openpyxl")
 datas += collect_data_files("pandas")
+
+# ✅ ADD THIS BLOCK (CRITICAL FIX)
+datas += copy_metadata("streamlit")
+datas += copy_metadata("altair")
+datas += copy_metadata("pandas")
+datas += copy_metadata("openpyxl")
 
 # ── Hidden imports ────────────────────────────────────────────────────────────
 hiddenimports = [
@@ -102,8 +107,8 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,        # No terminal window
-    icon=None,            # Swap in a .icns file path for a custom dock icon
+    console=False,
+    icon=None,
 )
 
 coll = COLLECT(
@@ -117,13 +122,12 @@ coll = COLLECT(
     name="GST Invoice Extractor",
 )
 
-# ── macOS .app bundle ─────────────────────────────────────────────────────────
-# Only built when running on macOS; ignored on Windows/Linux
+# ── macOS bundle ──────────────────────────────────────────────────────────────
 if sys.platform == "darwin":
     app = BUNDLE(
         coll,
         name="GST Invoice Extractor.app",
-        icon=None,              # Swap in a .icns file path for a dock icon
+        icon=None,
         bundle_identifier="com.gopaljee.gstin-extractor",
         info_plist={
             "CFBundleName":               "GST Invoice Extractor",

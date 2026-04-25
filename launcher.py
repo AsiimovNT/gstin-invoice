@@ -42,7 +42,7 @@ if __name__ == "__main__":
     else:
         bundle_dir = os.path.dirname(os.path.abspath(__file__))
 
-    # Make sure our modules are importable
+    # Ensure bundled modules are importable
     if bundle_dir not in sys.path:
         sys.path.insert(0, bundle_dir)
 
@@ -52,16 +52,19 @@ if __name__ == "__main__":
     t = threading.Thread(target=_open_browser, args=(port,), daemon=True)
     t.start()
 
-    # Launch Streamlit — use the CLI entry point so all internal wiring works
+    # Launch Streamlit
     from streamlit.web import cli as stcli
 
     app_path = os.path.join(bundle_dir, "app.py")
+
     sys.argv = [
-        "streamlit", "run", app_path,
+        "streamlit",
+        "run",
+        app_path,
         f"--server.port={port}",
         "--server.headless=true",
         "--browser.gatherUsageStats=false",
-        "--server.enableCORS=false",
-        "--server.enableXsrfProtection=false",
+        "--global.developmentMode=false",   # ✅ critical fix
     ]
+
     sys.exit(stcli.main())
