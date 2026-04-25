@@ -52,6 +52,13 @@ if __name__ == "__main__":
     t = threading.Thread(target=_open_browser, args=(port,), daemon=True)
     t.start()
 
+    # Force Streamlit out of development mode BEFORE the config system initialises.
+    # Without these, the frozen bundle sometimes detects dev-mode and raises:
+    #   RuntimeError: server.port does not work when global.developmentMode is true
+    os.environ["STREAMLIT_GLOBAL_DEVELOPMENT_MODE"]    = "false"
+    os.environ["STREAMLIT_SERVER_HEADLESS"]             = "true"
+    os.environ["STREAMLIT_BROWSER_GATHER_USAGE_STATS"]  = "false"
+
     # Launch Streamlit
     from streamlit.web import cli as stcli
 
@@ -61,10 +68,12 @@ if __name__ == "__main__":
         "streamlit",
         "run",
         app_path,
+        "--global.developmentMode=false",
         f"--server.port={port}",
         "--server.headless=true",
         "--browser.gatherUsageStats=false",
-        "--global.developmentMode=false",   # ✅ critical fix
+        "--server.enableCORS=false",
+        "--server.enableXsrfProtection=false",
     ]
 
     sys.exit(stcli.main())

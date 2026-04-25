@@ -37,6 +37,9 @@ jobs:
 
       # ── 5. Build EXE ────────────────────────────────────────────
       - name: Build with PyInstaller
+        env:
+          STREAMLIT_GLOBAL_DEVELOPMENT_MODE: "false"
+          STREAMLIT_SERVER_HEADLESS: "true"
         run: pyinstaller gstin_extractor.spec --clean --noconfirm
 
       # ── 6. DEBUG: check dist output ─────────────────────────────
